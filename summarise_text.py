@@ -59,6 +59,13 @@ async def summarise(file: UploadFile = File(...)):
     if text.strip():
         return {"error": "Could not extract and readable text from this file"}
     
+    # Request - Send the clean text to Gemini API
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        content=f"Summarise the following document accurately:\n{text}"
+    )
+    
+    return {"summarise": response.text}
    
             
     
