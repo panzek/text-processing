@@ -45,7 +45,10 @@ async def summarise(file: UploadFile = File(...)):
         try:
             doc = Document(io.BytesIO(content))
             text_content = "\n".join([para.text for para in doc.paragraphs])
-            contents = [f"Summarise this document content:\n{text_content}"]
+            contents = [
+                f"Summarise this document content:\n{text_content} Use plain text only"
+                "Do not use markdown, bolding, or bullet points."
+                ]
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -59,7 +62,8 @@ async def summarise(file: UploadFile = File(...)):
                 types.Content(
                     role="user",
                     parts=[
-                        types.Part.from_text(text="Please provide a concise summary of this PDF"),
+                        types.Part.from_text(text="Summarise this PDF. Use plain text only "
+                                             "Do not use markdown, bolding, or bullet points."),
                         types.Part.from_bytes(data=content, mime_type="application/pdf")
                     ]
                 )
@@ -82,7 +86,7 @@ async def summarise(file: UploadFile = File(...)):
                     status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Could not decode text file: {str(e)}"
                 )
-        
+    
     try:
         # Request - Send the clean text to Gemini API
         response = client.models.generate_content(
@@ -90,11 +94,13 @@ async def summarise(file: UploadFile = File(...)):
             contents=contents
         )
     
-        return {"summarise": response.text}
+        clean_text = response.text.strip()
+    
+        return {"summarise": clean_text}
     
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNALSERVER_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate summarywith Gemini: {str(e)}"
         )
         
