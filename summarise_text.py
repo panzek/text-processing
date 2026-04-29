@@ -31,6 +31,15 @@ async def summarise(file: UploadFile = File(...)):
     # Read the raw file bytes
     content = await file.read()
     
+    MAX_FILE_SIZE = 10 * 1024 * 1024 # 10MB
+    
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large. Maximum allowed size is 10MB."
+        )
+        
+    
     # DOCX handling
     if file.filename.lower().endswith('.docx'):
         try:
