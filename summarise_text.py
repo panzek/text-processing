@@ -1,10 +1,9 @@
 import io
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException, status
 from google import genai
-# from google.genai import types
+from google.genai import types
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pypdf import PdfReader
 from docx import Document
 
 
@@ -22,9 +21,6 @@ settings = Settings()
 # Initialize the Gemini Clienyt
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
-# Security Check
-print(f"Secret {settings.GEMINI_API_KEY}")
-
 # Instantiate FastAPI
 app = FastAPI()
 
@@ -32,40 +28,67 @@ app = FastAPI()
 @app.post("/summarise")
 # path operation function
 async def summarise(file: UploadFile = File(...)):
-    # Read the file into memory
+    # Read the raw file bytes
     content = await file.read()
-    text =""
     
-    # Open as a PDF
-    if file.filename.endswith('.pdf'):
-        reader = PdfReader(io.BytesIO(content))
-        for page in reader.pages:
-            page_text = page.extract_text
-            if page_text:
-                text += page_text + "\n"
-    
-    # Open as a word document
-    elif file.filename.endswith('docx'):
-        doc = Document(io.BytesIO(content))
-        text = "\n".join([para.text for para in doc.paragraphs])
-        
-    else:
-        # Fallback for plain text
+    # DOCX handling
+    if file.filename.lower().endswith('.docx'):
         try:
-            text = content.decode("utf=8")
+            doc = Document(io.BytesIO(content))
+            text_content = "\n".join([para.text for para in doc.paragraphs])
+            contents = [f"Summarise this document content:\n{text_content}"]
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to read DOCX: {str(e)}."
+            )
+    
+    # Handle PDFs using Gemini's native vision
+    elif file.filename.lower().endswith(".pdf"):
+        try:
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_text(text="Please provide a concise summary of this PDF"),
+                        types.Part.from_bytes(data=content, mime_type="application/pdf")
+                    ]
+                )
+            ]     
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to read PDF: {str(e)}"
+            )
+    
+    # fallback for plain text
+    else:
+        try:  
+            text_content = content.decode("utf-8", errors="replace")
         except UnicodeDecodeError:
-            text = content.decode("latin-1")
+            try:
+                text_content = content.decode("latin-1", errors="replace")
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Could not decode text file: {str(e)}"
+                )
+        
+    try:
+        # Request - Send the clean text to Gemini API
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=contents
+        )
     
-    if text.strip():
-        return {"error": "Could not extract any readable text from this file"}
+        return {"summarise": response.text}
     
-    # Request - Send the clean text to Gemini API
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        content=f"Summarise the following document accurately:\n{text}"
-    )
-    
-    return {"summarise": response.text}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNALSERVER_ERROR,
+            detail=f"Failed to generate summarywith Gemini: {str(e)}"
+        )
+        
    
             
     
