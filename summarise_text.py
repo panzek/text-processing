@@ -46,7 +46,7 @@ async def summarise(file: UploadFile = File(...)):
             doc = Document(io.BytesIO(content))
             text_content = "\n".join([para.text for para in doc.paragraphs])
             contents = [
-                f"Summarise this document content:\n{text_content} Use plain text only"
+                f"Review this resume and rewrite for improvements:\n{text_content} Use plain text only"
                 "Do not use markdown, bolding, or bullet points."
                 ]
         except Exception as e:
@@ -62,7 +62,7 @@ async def summarise(file: UploadFile = File(...)):
                 types.Content(
                     role="user",
                     parts=[
-                        types.Part.from_text(text="Summarise this PDF. Use plain text only "
+                        types.Part.from_text(text="Review this resume and rewrite for improvements "
                                              "Do not use markdown, bolding, or bullet points."),
                         types.Part.from_bytes(data=content, mime_type="application/pdf")
                     ]
