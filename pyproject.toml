@@ -11,4 +11,6 @@ dependencies = [
     "pydantic-settings>=2.14.0",
     "pypdf[full]>=6.10.2",
     "python-docx>=1.2.0",
+    "requests>=2.33.1",
+    "streamlit>=1.57.0",
 ]
