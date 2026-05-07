@@ -28,6 +28,7 @@ app = FastAPI()
 # CORS (Cross-Origin Resource Sharing)
 origins = [
     "https://panzek.onrender.com", 
+    "https://resumepluscover.streamlit.app"
     "http://localhost", 
     "http://localhost:8080", 
     "http://127.0.0.1:8080",

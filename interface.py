@@ -9,12 +9,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("💼 AI Resume Reviewer")  
-st.write("Upload a your resume below for review")
+st.title("💼 Résumé Reviewer")  
+st.write("Upload your resume below for AI-powered review and suggestions. "
+         "We may draft a compelling cover letter to support your resume."
+         )
 
 
 API_URL = "https://panzek.onrender.com/summarise"
 
+# Define your footer HTML and CSS
+footer = """
+<style>
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    # background-color: #f1f1f1;
+    color: black;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+}
+</style>
+
+<div class="footer">
+    <p>&copy;Panzek Solutions 2026</p>
+</div>
+"""
+
+# Render the footer
+st.markdown(footer, unsafe_allow_html=True)
 uploaded_file = st.file_uploader(
     "Choose a file",
     type= ["pdf", "docx", "txt"]
