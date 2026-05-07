@@ -1,5 +1,6 @@
 import io
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
 from pydantic import SecretStr
@@ -23,6 +24,22 @@ client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
 # Instantiate FastAPI
 app = FastAPI()
+
+# CORS (Cross-Origin Resource Sharing)
+origins = [
+    "https://panzek.onrender.com", 
+    "http://localhost", 
+    "http://localhost:8080", 
+    "http://127.0.0.1:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Define a path operation
 @app.post("/review")

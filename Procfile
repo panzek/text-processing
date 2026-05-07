@@ -1,0 +1,1 @@
+web: uvicorn resume_reviewer:app --host 0.0.0.0 --port $PORT
