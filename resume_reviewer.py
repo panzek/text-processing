@@ -25,9 +25,9 @@ client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 app = FastAPI()
 
 # Define a path operation
-@app.post("/summarise")
+@app.post("/review")
 # path operation function
-async def summarise(file: UploadFile = File(...)):
+async def review(file: UploadFile = File(...)):
     # Read the raw file bytes
     content = await file.read()
     

@@ -13,7 +13,7 @@ st.title("💼 AI Resume Reviewer")
 st.write("Upload a your resume below for review")
 
 
-API_URL = "http://localhost:8000/summarise"
+API_URL = "https://panzek.onrender.com/summarise"
 
 uploaded_file = st.file_uploader(
     "Choose a file",
