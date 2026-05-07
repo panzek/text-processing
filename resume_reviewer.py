@@ -64,7 +64,8 @@ async def review(file: UploadFile = File(...)):
             doc = Document(io.BytesIO(content))
             text_content = "\n".join([para.text for para in doc.paragraphs])
             contents = [
-                f"Review this resume and rewrite for improvements:\n{text_content}."
+                f"Review this resume and rewrite for improvements:\n{text_content}. "
+                    "Draft a compelling cover letter that matches the rewritten resume."
                 ]
         except Exception as e:
             raise HTTPException(
@@ -118,7 +119,7 @@ async def review(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate summarywith Gemini: {str(e)}"
+            detail=f"Failed to generate review with Gemini: {str(e)}"
         )
         
    
