@@ -65,7 +65,7 @@ async def review(file: UploadFile = File(...)):
             text_content = "\n".join([para.text for para in doc.paragraphs])
             contents = [
                 f"Review this resume and rewrite for improvements:\n{text_content}. "
-                    "Draft a compelling cover letter that matches the rewritten resume."
+                    "Also, draft a compelling cover letter that matches the rewritten resume."
                 ]
         except Exception as e:
             raise HTTPException(
@@ -81,7 +81,7 @@ async def review(file: UploadFile = File(...)):
                     role="user",
                     parts=[
                         types.Part.from_text(text="Review this resume and rewrite for improvements "
-                                             "Draft a compelling cover letter that matches the rewritten resume."),
+                                             "Also, draft a compelling cover letter that matches the rewritten resume."),
                         types.Part.from_bytes(data=content, mime_type="application/pdf")
                     ]
                 )
@@ -114,7 +114,7 @@ async def review(file: UploadFile = File(...)):
     
         clean_text = response.text.strip()
     
-        return {"summarise": clean_text}
+        return {"review": clean_text}
     
     except Exception as e:
         raise HTTPException(
