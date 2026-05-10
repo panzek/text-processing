@@ -62,7 +62,7 @@ if uploaded_file is not None:
                     
                     st.success("Done!")
                     st.subheader("Reviewed Resume:")
-                    st.info(result.get("summarise", "No summary returned"))
+                    st.markdown(result.get("review", "No summary returned"))
             
                 else:
                     st.error(f"Server Error: {response.status_code}")

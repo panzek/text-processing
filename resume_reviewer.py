@@ -30,8 +30,8 @@ origins = [
     "https://panzek.onrender.com", 
     "https://resumepluscover.streamlit.app"
     "http://localhost", 
-    "http://localhost:8080", 
-    "http://127.0.0.1:8080",
+    "http://localhost:8000", 
+    "http://127.0.0.1:8000/review",
 ]
 
 app.add_middleware(
@@ -57,7 +57,6 @@ async def review(file: UploadFile = File(...)):
             detail="File too large. Maximum allowed size is 10MB."
         )
         
-    
     # DOCX handling
     if file.filename.lower().endswith('.docx'):
         try:
@@ -96,14 +95,16 @@ async def review(file: UploadFile = File(...)):
     else:
         try:  
             text_content = content.decode("utf-8", errors="replace")
-        except UnicodeDecodeError:
-            try:
-                text_content = content.decode("latin-1", errors="replace")
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Could not decode text file: {str(e)}"
-                )
+            contents = [
+                f"Review this resume and rewrite for improvements:\n{text_content}. "
+                    "Also, draft a compelling cover letter that matches the rewritten resume."
+                ]
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Could not decode text file: {str(e)}"
+            )
     
     try:
         # Request - Send the clean text to Gemini API
@@ -112,9 +113,7 @@ async def review(file: UploadFile = File(...)):
             contents=contents
         )
     
-        clean_text = response.text.strip()
-    
-        return {"review": clean_text}
+        return {"review": response.text.strip()}
     
     except Exception as e:
         raise HTTPException(
@@ -122,6 +121,3 @@ async def review(file: UploadFile = File(...)):
             detail=f"Failed to generate review with Gemini: {str(e)}"
         )
         
-   
-            
-    
