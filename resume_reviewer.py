@@ -56,16 +56,18 @@ async def review(file: UploadFile = File(...)):
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File too large. Maximum allowed size is 10MB."
         )
-        
+    
+    prompt = (
+        "Review this resume and rewrite for improvements. "
+        "Also, draft a compelling cover letter that matches the rewritten resume."
+    )  
+    
     # DOCX handling
     if file.filename.lower().endswith('.docx'):
         try:
             doc = Document(io.BytesIO(content))
             text_content = "\n".join([para.text for para in doc.paragraphs])
-            contents = [
-                f"Review this resume and rewrite for improvements:\n{text_content}. "
-                    "Also, draft a compelling cover letter that matches the rewritten resume."
-                ]
+            contents = [f"{prompt}\n\n{text_content}"]
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -79,8 +81,7 @@ async def review(file: UploadFile = File(...)):
                 types.Content(
                     role="user",
                     parts=[
-                        types.Part.from_text(text="Review this resume and rewrite for improvements "
-                                             "Also, draft a compelling cover letter that matches the rewritten resume."),
+                        types.Part.from_text(text=prompt),
                         types.Part.from_bytes(data=content, mime_type="application/pdf")
                     ]
                 )
@@ -95,10 +96,7 @@ async def review(file: UploadFile = File(...)):
     else:
         try:  
             text_content = content.decode("utf-8", errors="replace")
-            contents = [
-                f"Review this resume and rewrite for improvements:\n{text_content}. "
-                    "Also, draft a compelling cover letter that matches the rewritten resume."
-                ]
+            contents = [f"{prompt}\n\n{text_content}"]
 
         except Exception as e:
             raise HTTPException(
