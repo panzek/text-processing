@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # API Config
     API_URL: str = "https://panzek.onrender.com/review"
     
-    GEMINI_API_KEY: SecretStr
+    GEMINI_API_KEY: SecretStr | None = None
     
     model_config = SettingsConfigDict(
         env_file='.env',
