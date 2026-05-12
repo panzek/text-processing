@@ -3,23 +3,11 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
-from pydantic import SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from docx import Document
 
+from config import settings
 
-# Settings Configuration
-class Settings(BaseSettings):
-    GEMINI_API_KEY: SecretStr
-    
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        extra='ignore'
-    )
-    
-settings = Settings()
-
-# Initialize the Gemini Clienyt
+# Initialize the Gemini Client
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 
 # Instantiate FastAPI

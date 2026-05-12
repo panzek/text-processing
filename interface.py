@@ -1,10 +1,14 @@
 import streamlit as st
 import requests
 
+from config import settings
+
+API_URL = settings.API_URL
+
+# Configure streamlit page
 st.set_page_config(
     page_title="AI Document Reviewer", 
     page_icon="💼",
-    # layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -12,8 +16,6 @@ st.title("💼 Résumé Reviewer")
 st.write("Upload your resume below for AI-powered review, rewrite with improvements, "
          "and a draft of a compelling, professional cover letter tailored to it."
          )
-
-API_URL = "https://panzek.onrender.com/review"
 
 # Define your footer HTML and CSS
 footer = """
@@ -29,7 +31,8 @@ footer = """
 </style>
 
 <div class="footer">
-    <p>&copy;Panzek Solutions 2026</p>
+    <p>&copy;Panzek Solutions 2026 | <a href="https://panzeksolutions.com/" target="_blank">Website</a></p></p>
+    
 </div>
 """
 
@@ -48,7 +51,7 @@ if uploaded_file is not None:
             
             try:
                 # Send the POST requests to FastAPI
-                response = requests.post(API_URL, files=files, timeout=120)
+                response = requests.post(settings.API_URL, files=files, timeout=120)
                 
                 if response.status_code == 200:
                     result = response.json()
