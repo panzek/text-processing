@@ -9,8 +9,8 @@ st.set_page_config(
 )
 
 st.title("💼 Résumé Reviewer")  
-st.write("Upload your resume below for AI-powered review and suggestions. "
-         "Also, we may draft a compelling cover letter to support your resume."
+st.write("Upload your resume below for AI-powered review, rewrite with improvements, "
+         "and a draft of a compelling, professional cover letter tailored to it."
          )
 
 API_URL = "https://panzek.onrender.com/review"

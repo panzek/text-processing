@@ -58,8 +58,10 @@ async def review(file: UploadFile = File(...)):
         )
     
     prompt = (
-        "Review this resume and rewrite for improvements. "
-        "Also, draft a compelling cover letter that matches the rewritten resume."
+        "You are an expert career coach. "
+        "Review this resume carefully and rewrite it with improvements. "
+        "Then draft a compelling, professional  cover letter tailored to it.\n\n"
+        "Resume content:\n"
     )  
     
     # DOCX handling
