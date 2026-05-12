@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import time
 
 st.set_page_config(
     page_title="AI Document Reviewer", 
@@ -14,21 +13,17 @@ st.write("Upload your resume below for AI-powered review and suggestions. "
          "Also, we may draft a compelling cover letter to support your resume."
          )
 
-
 API_URL = "https://panzek.onrender.com/review"
 
 # Define your footer HTML and CSS
 footer = """
 <style>
 .footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
     width: 100%;
-    # background-color: #f1f1f1;
-    color: black;
+    border-top: 1px solid #e9ecef;
+    color: #6c757d;
     text-align: center;
-    padding: 10px;
+    padding: 50px 10px 20px 10px;
     font-size: 14px;
 }
 </style>
@@ -38,8 +33,6 @@ footer = """
 </div>
 """
 
-# Render the footer
-st.markdown(footer, unsafe_allow_html=True)
 uploaded_file = st.file_uploader(
     "Choose a file",
     type= ["pdf", "docx", "txt"]
@@ -61,7 +54,7 @@ if uploaded_file is not None:
                     result = response.json()
                     
                     st.success("Done!")
-                    st.subheader("Reviewed Resume:")
+                    st.subheader("AI Review & Cover Letter")
                     st.markdown(result.get("review", "No summary returned"))
             
                 else:
@@ -69,4 +62,7 @@ if uploaded_file is not None:
         
             except requests.exceptions.ConnectionError:
                 st.error("Could not connect to FastAPI.")
+
+# Render the footer
+st.markdown(footer, unsafe_allow_html=True)
                 
