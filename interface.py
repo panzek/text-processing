@@ -3,14 +3,38 @@ import requests
 
 from config import settings
 
+BACKEND = settings.BACKEND
 API_URL = settings.API_URL
 
+# initialise application memory
+if "payment_satus" not in st.session_state:
+    st.session_state.payment_status = "idle"
+if "session_id" not in st.session_state:
+    st.session_state.session_id = None
+    
 # Configure streamlit page
 st.set_page_config(
     page_title="AI Document Reviewer", 
     page_icon="💼",
     initial_sidebar_state="expanded"
 )
+
+if st.session_state.payment_status == "idle":
+    st.title("💼 Résumé Reviewer")
+    st.write("Professional AI-powered review and cover letter generation for €5.00.")
+    
+    if st.button("Pay and Get Started"):
+        try:
+            response = requests.get(f"{BACKEND}/create-checkout-session")
+            print(f"Response: {response}")
+            
+            data = response.json()
+            print(f"The returned payload: {data}")
+        
+        except:  # noqa: E722
+            st.error("Could not reach the payment server")
+        
+
 
 st.title("💼 Résumé Reviewer")  
 st.write("Upload your resume below for AI-powered review, rewrite with improvements, "

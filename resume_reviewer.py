@@ -5,6 +5,7 @@ from google import genai
 from google.genai import types
 from docx import Document
 
+import stripe
 from config import settings
 
 # Initialize the Gemini Client
@@ -29,6 +30,39 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# define payment endpoint
+app.get("/create-checkout-session")
+async def create_checkout_session():
+    try:
+        session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'eur',
+                'product_data': {
+                    'name': 'Professional Résumé Reviewer',
+                    'description': 'A rewritten resume with compelling, professional  cover letter tailored to it' 
+                },
+                'unit_amount': 500  
+            },
+            'quantity': 1
+        }],
+        mode='payment',
+        # automatic_payment_methods={"enabled":True},
+        success_url="https://resumepluscover.streamlit.app/?payment=success&session_id={CHECKOUT_SESSION_ID}",
+        cancel_url="https://resumepluscover.streamlit.app/?payment=cancel"
+        )
+        
+        return {"url": session.url, "id": session.id}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=str(e)
+        )
+    
+
 
 # Define a path operation
 @app.post("/review")
