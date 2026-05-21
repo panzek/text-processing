@@ -1,5 +1,5 @@
 import io
-from fastapi import FastAPI, File, UploadFile, HTTPException, status
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
@@ -10,6 +10,10 @@ from config import settings
 
 # Initialize the Gemini Client
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
+stripe.api_key = settings.STRIPE_SECRET_KEY.get_secret_value()
+
+# Mock database to temporary store session id and payment status 
+payment_db = {}
 
 # Instantiate FastAPI
 app = FastAPI()
@@ -32,7 +36,7 @@ app.add_middleware(
 )
 
 # define payment endpoint
-app.get("/create-checkout-session")
+@app.get("/create-checkout-session")
 async def create_checkout_session():
     try:
         session = stripe.checkout.Session.create(
@@ -49,9 +53,8 @@ async def create_checkout_session():
             'quantity': 1
         }],
         mode='payment',
-        # automatic_payment_methods={"enabled":True},
-        success_url="https://resumepluscover.streamlit.app/?payment=success&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url="https://resumepluscover.streamlit.app/?payment=cancel"
+        success_url="http://localhost:8501/?payment=success&session_id={CHECKOUT_SESSION_ID}",
+        cancel_url="http://localhost:8501/?payment=cancel"
         )
         
         return {"url": session.url, "id": session.id}
@@ -61,9 +64,35 @@ async def create_checkout_session():
             status_code=500, 
             detail=str(e)
         )
+
     
-
-
+# Listen for Stripe webhook notifications, specifically based on our 
+# selected event type in stripe account, that confirm that a user has paid
+@app.post("/webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WH_SECRET
+        )
+    
+    except Exception as e:  
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Webhook Error: {str(e)}"
+        )
+    
+    if event['type'] == 'chechout.session.completed':
+        session = event.data.object
+        # record payment in the database
+        payment_db[session['id']] = "paid"
+        print(f"Payment verified for Sessiion: {session['id']}")
+        
+    return {"status": "success"}
+    
+    
 # Define a path operation
 @app.post("/review")
 # path operation function

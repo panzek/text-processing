@@ -3,8 +3,13 @@ import requests
 
 from config import settings
 
-BACKEND = settings.BACKEND
 API_URL = settings.API_URL
+
+# Set to run backend dynamically
+if settings.DEVELOPMENT_MODE:
+    BACKEND= "http://127.0.0.1:8000"
+else:
+    BACKEND = "https://panzek.onrender.com"
 
 # initialise application memory
 if "payment_satus" not in st.session_state:
@@ -23,19 +28,43 @@ if st.session_state.payment_status == "idle":
     st.title("💼 Résumé Reviewer")
     st.write("Professional AI-powered review and cover letter generation for €5.00.")
     
-    if st.button("Pay and Get Started"):
+    # Dynamic placeholder block
+    button_placeholder = st.empty()
+    
+    if button_placeholder.button("Pay and Get Started", key="pay_init_btn"):
         try:
             response = requests.get(f"{BACKEND}/create-checkout-session")
-            print(f"Response: {response}")
-            
             data = response.json()
-            print(f"The returned payload: {data}")
+            checkout_url = data.get("url")
+            st.session_state.session_id = data.get("id")
+            
+            button_placeholder.markdown(f'''
+                <a href="{checkout_url}" target="_self"
+                    style="
+                    display:inline-block;
+                        text-decoration:none;
+                        background-color: #0074d4; 
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        font-weight:600;
+                    ">
+                    Click to Go to Secure Payment
+                </a>
+                <p 
+                style="
+                color:red; 
+                margin: 0px 0px 0.2rem;
+                ">
+                </p>
+                ''', 
+                unsafe_allow_html=True
+            )
+            
+        except Exception as e:  # noqa: E722
+            button_placeholder.button("Pay and Get Started", key="pay_retry_btn")
+            st.error(f"Could not reach the payment server: {e}")
         
-        except:  # noqa: E722
-            st.error("Could not reach the payment server")
-        
-
-
 st.title("💼 Résumé Reviewer")  
 st.write("Upload your resume below for AI-powered review, rewrite with improvements, "
          "and a draft of a compelling, professional cover letter tailored to it."

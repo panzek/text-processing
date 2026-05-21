@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Settings Configuration
 class Settings(BaseSettings):
     # API Config
-    BACKEND: str
+    DEVELOPMENT_MODE: bool
     API_URL: str
     
     GEMINI_API_KEY: SecretStr | None = None
