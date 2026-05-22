@@ -7,16 +7,29 @@ API_URL = settings.API_URL
 
 # Set to run backend dynamically
 if settings.DEVELOPMENT_MODE:
-    BACKEND= "http://127.0.0.1:8000"
+    BACKEND_URL= "http://127.0.0.1:8000"
 else:
-    BACKEND = "https://panzek.onrender.com"
+    BACKEND_URL = "https://panzek.onrender.com"
 
-# initialise application memory
-if "payment_satus" not in st.session_state:
-    st.session_state.payment_status = "idle"
-if "session_id" not in st.session_state:
-    st.session_state.session_id = None
+# Define your footer HTML and CSS
+footer = """
+<style>
+.footer {
+    width: 100%;
+    border-top: 1px solid #e9ecef;
+    color: #6c757d;
+    text-align: center;
+    padding: 50px 10px 20px 10px;
+    font-size: 14px;
+}
+</style>
+
+<div class="footer">
+    <p>&copy;Panzek Solutions 2026 | <a href="https://panzeksolutions.com/" target="_blank">Website</a></p></p>
     
+</div>
+"""
+
 # Configure streamlit page
 st.set_page_config(
     page_title="AI Document Reviewer", 
@@ -24,6 +37,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# initialise application memory
+if "payment_status" not in st.session_state:
+    st.session_state.payment_status = "idle"
+if "session_id" not in st.session_state:
+    st.session_state.session_id = None
+    
 if st.session_state.payment_status == "idle":
     st.title("💼 Résumé Reviewer")
     st.write("Professional AI-powered review and cover letter generation for €5.00.")
@@ -33,7 +52,7 @@ if st.session_state.payment_status == "idle":
     
     if button_placeholder.button("Pay and Get Started", key="pay_init_btn"):
         try:
-            response = requests.get(f"{BACKEND}/create-checkout-session")
+            response = requests.get(f"{BACKEND_URL}/create-checkout-session")
             data = response.json()
             checkout_url = data.get("url")
             st.session_state.session_id = data.get("id")
@@ -61,56 +80,55 @@ if st.session_state.payment_status == "idle":
                 unsafe_allow_html=True
             )
             
-        except Exception as e:  # noqa: E722
+        except Exception as e:  
             button_placeholder.button("Pay and Get Started", key="pay_retry_btn")
             st.error(f"Could not reach the payment server: {e}")
-        
-st.title("💼 Résumé Reviewer")  
-st.write("Upload your resume below for AI-powered review, rewrite with improvements, "
-         "and a draft of a compelling, professional cover letter tailored to it."
-         )
 
-# Define your footer HTML and CSS
-footer = """
-<style>
-.footer {
-    width: 100%;
-    border-top: 1px solid #e9ecef;
-    color: #6c757d;
-    text-align: center;
-    padding: 50px 10px 20px 10px;
-    font-size: 14px;
-}
-</style>
+# Handle redirect from Stripe
+query_params = st.query_params
+if "payment" in query_params and "session_id" in query_params:
+    sid = query_params["session_id"] 
+    # verify payment status with the FastAPI backend
+    with st.spinner("Verifying payment...", show_time=True):
+        try:
+            res = requests.get(f"{BACKEND_URL}/verify-payment/{sid}")
+            print(f"Payment Verification Response: {res}")
+            if res.status_code == 200 and res.json().get("status") == "paid":
+                st.session_state.payment_status = "paid"
+                st.success("Payment confirmed! You may now upload your résumé")
+            else:
+                st.error("Payment not yet confirmed by Stripe. Please wait a moment and refresh")
+        except Exception as e:
+            st.error(f"Connection error: {e}")
+            
+elif st.session_state.payment_status == "paid":     
+    st.title("Upload Your Résumé")  
 
-<div class="footer">
-    <p>&copy;Panzek Solutions 2026 | <a href="https://panzeksolutions.com/" target="_blank">Website</a></p></p>
+    uploaded_file = st.file_uploader(
+        "Choose a file",
+        type= ["pdf", "docx", "txt"]
+    )
     
-</div>
-"""
-
-uploaded_file = st.file_uploader(
-    "Choose a file",
-    type= ["pdf", "docx", "txt"]
-)
-
-if uploaded_file is not None:
-    if st.button("Review"):
+    if uploaded_file and st.button("Run AI-powered Review"):
         # Spinner wrapped code that performs network request
-        with st.spinner("Reviewing document... Please wait.", show_time=True):
+        with st.spinner("AI is reviewing Résumé... Please wait.", show_time=True):
             
             # Prepare the file to be sent via HTTP
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+            
+            # pass the session_id  as a query parameter for the backend to verify
+            review_url = f"{BACKEND_URL}/review?session_id={st.session_state.session_id}"
             
             try:
                 # Send the POST requests to FastAPI
                 response = requests.post(settings.API_URL, files=files, timeout=120)
                 
                 if response.status_code == 200:
-                    result = response.json()
+                    result = response.json().get("review")
                     
                     st.success("Done!")
-                    st.subheader("AI Review & Cover Letter")
+                    # st.subheader("AI Review & Cover Letter")
+                    st.markdown("### AI Analysis & Cover Letter")
                     st.markdown(result.get("review", "No summary returned"))
             
                 else:

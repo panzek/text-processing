@@ -65,7 +65,6 @@ async def create_checkout_session():
             detail=str(e)
         )
 
-    
 # Listen for Stripe webhook notifications, specifically based on our 
 # selected event type in stripe account, that confirm that a user has paid
 @app.post("/webhook")
@@ -91,12 +90,35 @@ async def stripe_webhook(request: Request):
         print(f"Payment verified for Sessiion: {session['id']}")
         
     return {"status": "success"}
-    
-    
+
+@app.get("/verify-payment/{session_id}")
+async def verify_payment(session_id: str):
+    # check the database for session id
+    status = payment_db.get(session_id)
+    if status == "paid":
+        print(f"Verification Request: {session_id} is Confirmed Paid.")
+        return {"status": "paid"}
+    try:
+        stripe_session = stripe.checkout.Session.retrieve(session_id)     
+        if stripe_session.payment_status == "paid":
+            payment_db[session_id] = "paid"
+            return {"status": "paid"}
+    except Exception as e:
+        print(f"Stripe API retrieval failed: {e}")
+        
+    print(f"Verification Request: {session_id} is still Pending.")
+    return {"status": "pending"}
+   
 # Define a path operation
 @app.post("/review")
 # path operation function
-async def review(file: UploadFile = File(...)):
+async def review(session_id: str, file: UploadFile = File(...)):
+    # verify payment
+    if payment_db.get(session_id) != "paid":
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED, 
+            detail="Payment not verifed. Please complete checkout first"
+            )
     # Read the raw file bytes
     content = await file.read()
     
@@ -171,4 +193,3 @@ async def review(file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate review with Gemini: {str(e)}"
         )
-        
