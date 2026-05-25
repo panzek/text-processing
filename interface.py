@@ -42,7 +42,24 @@ if "payment_status" not in st.session_state:
     st.session_state.payment_status = "idle"
 if "session_id" not in st.session_state:
     st.session_state.session_id = None
-    
+
+# Global verification layer - Handle redirect from Stripe
+query_params = st.query_params
+if "payment" in query_params and "session_id" in query_params:
+    sid = query_params["session_id"] 
+    if st.session_state.payment_status != "paid":
+        # verify payment status with the FastAPI backend
+        with st.spinner("Verifying payment...", show_time=True):
+            try:
+                res = requests.get(f"{BACKEND_URL}/verify-payment/{sid}")
+                if res.status_code == 200 and res.json().get("status") == "paid":
+                    st.session_state.payment_status = "paid"
+                    st.session_state.session_id = "idle"
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Connection error: {e}")
+            
+# The idle layout block   
 if st.session_state.payment_status == "idle":
     st.title("💼 Résumé Reviewer")
     st.write("Professional AI-powered review and cover letter generation for €5.00.")
@@ -84,51 +101,35 @@ if st.session_state.payment_status == "idle":
             button_placeholder.button("Pay and Get Started", key="pay_retry_btn")
             st.error(f"Could not reach the payment server: {e}")
 
-# Handle redirect from Stripe
-query_params = st.query_params
-if "payment" in query_params and "session_id" in query_params:
-    sid = query_params["session_id"] 
-    # verify payment status with the FastAPI backend
-    with st.spinner("Verifying payment...", show_time=True):
-        try:
-            res = requests.get(f"{BACKEND_URL}/verify-payment/{sid}")
-            print(f"Payment Verification Response: {res}")
-            if res.status_code == 200 and res.json().get("status") == "paid":
-                st.session_state.payment_status = "paid"
-                st.success("Payment confirmed! You may now upload your résumé")
-            else:
-                st.error("Payment not yet confirmed by Stripe. Please wait a moment and refresh")
-        except Exception as e:
-            st.error(f"Connection error: {e}")
-            
+# The paid layout block          
 elif st.session_state.payment_status == "paid":     
     st.title("Upload Your Résumé")  
+    st.success("Payment confirmed! You may now upload your résumé")
 
     uploaded_file = st.file_uploader(
         "Choose a file",
         type= ["pdf", "docx", "txt"]
     )
     
-    if uploaded_file and st.button("Run AI-powered Review"):
+    if uploaded_file and st.button("Run Résumé Reviewer"):
         # Spinner wrapped code that performs network request
         with st.spinner("AI is reviewing Résumé... Please wait.", show_time=True):
             
             # Prepare the file to be sent via HTTP
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             
-            # pass the session_id  as a query parameter for the backend to verify
-            review_url = f"{BACKEND_URL}/review?session_id={st.session_state.session_id}"
-            
             try:
                 # Send the POST requests to FastAPI
                 response = requests.post(settings.API_URL, files=files, timeout=120)
                 
                 if response.status_code == 200:
-                    result = response.json().get("review")
+                    print(f"Response from Stripe: {response}")
+                    result = response.json()
+                    print(f"JSON formatted Result: {result}")
                     
-                    st.success("Done!")
-                    # st.subheader("AI Review & Cover Letter")
-                    st.markdown("### AI Analysis & Cover Letter")
+                    st.balloons()
+                    st.success("Review Complete!")
+                    st.markdown("### Optimised Review & Cover Letter")
                     st.markdown(result.get("review", "No summary returned"))
             
                 else:
