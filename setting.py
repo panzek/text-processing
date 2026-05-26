@@ -3,14 +3,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Settings Configuration
 class Settings(BaseSettings):
-    # API Config
-    DEVELOPMENT_MODE: bool
-    API_URL: str
-    
-    GEMINI_API_KEY: SecretStr | None = None
-    STRIPE_PUBLIC_KEY: str 
+    # API Config   
     STRIPE_SECRET_KEY: SecretStr
     STRIPE_WH_SECRET: str
+    GEMINI_API_KEY: SecretStr
+    
+    DEVELOPMENT_MODE: bool = False
+    API_URL: str = "https://panzek.onrender.com"
+    STRIPE_PUBLIC_KEY: str = ""
     
     model_config = SettingsConfigDict(
         env_file='.env',
