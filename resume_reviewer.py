@@ -6,7 +6,7 @@ from google.genai import types
 from docx import Document
 
 import stripe
-from setting import settings
+from config import settings
 
 # Initialize the Gemini Client
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())

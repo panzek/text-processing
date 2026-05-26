@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-from setting import settings
+from config import settings
 
 API_URL = settings.API_URL
 
