@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-import os
+# import os
 
 API_URL = "https://panzek.onrender.com/review"
 
@@ -76,35 +76,29 @@ if st.session_state.payment_status == "idle":
     if button_placeholder.button("Pay and Get Started", key="pay_init_btn"):
         try:
             response = requests.get(f"{BACKEND_URL}/create-checkout-session")
-            data = response.json()
-            checkout_url = data.get("url")
-            st.session_state.session_id = data.get("id")
-            
-            button_placeholder.markdown(f'''
-                <a href="{checkout_url}" target="_self"
-                    style="
-                    display:inline-block;
-                        text-decoration:none;
-                        background-color: #0074d4; 
-                        color: white;
-                        padding: 10px 20px;
-                        border-radius: 5px;
-                        font-weight:600;
-                    ">
-                    Click to Go to Secure Payment
-                </a>
-                <p 
-                style="
-                color:red; 
-                margin: 0px 0px 0.2rem;
-                ">
-                </p>
-                ''', 
-                unsafe_allow_html=True
-            )
-            
+            if response.status_code != 200:
+                st.error(f"Backend error: {response.text}")
+            else:
+                data = response.json()
+                checkout_url = data.get("url")
+                st.session_state.session_id = data.get("id")
+                
+                if checkout_url:
+                    
+                    button_placeholder.markdown(                     
+                        f'''
+                        <meta http-equiv="refresh" content="0; url={checkout_url}">
+                        ''', 
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.error("Stripe checkout URL missing.")
+                    
         except Exception as e:  
-            button_placeholder.button("Pay and Get Started", key="pay_retry_btn")
+            button_placeholder.button(
+                "Pay and Get Started", 
+                key="pay_retry_btn"
+            )
             st.error(f"Could not reach the payment server: {e}")
 
 # The paid layout block          
