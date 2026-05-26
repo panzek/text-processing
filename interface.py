@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-from config import settings
+from settings import settings
 
 API_URL = settings.API_URL
 
@@ -111,7 +111,7 @@ elif st.session_state.payment_status == "paid":
         type= ["pdf", "docx", "txt"]
     )
     
-    if uploaded_file and st.button("Run Résumé Reviewer"):
+    if uploaded_file and st.button("Review Your Résumé"):
         # Spinner wrapped code that performs network request
         with st.spinner("AI is reviewing Résumé... Please wait.", show_time=True):
             
@@ -121,12 +121,8 @@ elif st.session_state.payment_status == "paid":
             try:
                 # Send the POST requests to FastAPI
                 response = requests.post(settings.API_URL, files=files, timeout=120)
-                
                 if response.status_code == 200:
-                    print(f"Response from Stripe: {response}")
                     result = response.json()
-                    print(f"JSON formatted Result: {result}")
-                    
                     st.balloons()
                     st.success("Review Complete!")
                     st.markdown("### Optimised Review & Cover Letter")
