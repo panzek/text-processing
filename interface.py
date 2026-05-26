@@ -4,11 +4,14 @@ import os
 
 API_URL = "https://panzek.onrender.com/review"
 
+
+# BACKEND_URL = "https://panzek.onrender.com"
+BACKEND_URL = BACKEND_URL= "http://127.0.0.1:8000"
 # Set to run backend dynamically
-if os.environ.get("IS_PRODUCTION") == "true":
-    BACKEND_URL = "https://panzek.onrender.com"
-else:
-    BACKEND_URL = BACKEND_URL= "http://127.0.0.1:8000"
+# if os.environ.get("IS_PRODUCTION") == "true":
+#     BACKEND_URL = "https://panzek.onrender.com"
+# else:
+#     BACKEND_URL = BACKEND_URL= "http://127.0.0.1:8000"
 
 # Define your footer HTML and CSS
 footer = """
