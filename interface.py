@@ -6,10 +6,11 @@ from setting import settings
 API_URL = settings.API_URL
 
 # Set to run backend dynamically
-if settings.DEVELOPMENT_MODE:
-    BACKEND_URL= "http://127.0.0.1:8000"
-else:
-    BACKEND_URL = "https://panzek.onrender.com"
+BACKEND_URL=settings.BACKEND_URL
+# if settings.DEVELOPMENT_MODE:
+#     BACKEND_URL= "http://127.0.0.1:8000"
+# else:
+#     BACKEND_URL = "https://panzek.onrender.com"
 
 # Define your footer HTML and CSS
 footer = """
