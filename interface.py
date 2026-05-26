@@ -1,16 +1,16 @@
 import streamlit as st
 import requests
+import os
 
-from config import settings
-
-API_URL = settings.API_URL
+API_URL = "https://panzek.onrender.com/review"
 
 # Set to run backend dynamically
-BACKEND_URL=settings.BACKEND_URL
-# if settings.DEVELOPMENT_MODE:
-#     BACKEND_URL= "http://127.0.0.1:8000"
-# else:
-#     BACKEND_URL = "https://panzek.onrender.com"
+IS_PRODUCTION = os.environ.get("RENDER", "false") == "true"
+
+if not IS_PRODUCTION:
+    BACKEND_URL= "http://127.0.0.1:8000"
+else:
+    BACKEND_URL = "https://panzek.onrender.com"
 
 # Define your footer HTML and CSS
 footer = """
@@ -125,7 +125,7 @@ elif st.session_state.payment_status == "paid":
             
             try:
                 # Send the POST requests to FastAPI
-                response = requests.post(settings.API_URL, files=files, timeout=120)
+                response = requests.post(API_URL, files=files, timeout=120)
                 if response.status_code == 200:
                     result = response.json()
                     st.balloons()

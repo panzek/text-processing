@@ -1,4 +1,4 @@
-from pydantic import SecretStr, computed_field
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Settings Configuration
@@ -19,14 +19,5 @@ class Settings(BaseSettings):
         extra='ignore'
     )
     
-    @computed_field
-    @property
-    def BACKEND_URL(self) -> str:
-        return (
-            "http://127.0.0.1:8000"
-            if self.DEVELOPMENT_MODE
-            else "https://panzek.onrender.com"
-        )
-
 # Global instance
 settings = Settings()
