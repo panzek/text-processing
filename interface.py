@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import streamlit.components.v1 as components
 # import os
 
 API_URL = "https://panzek.onrender.com/review"
