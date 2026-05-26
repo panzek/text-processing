@@ -30,9 +30,10 @@ The entire flow is shown asynchronous, responsive, and includes proper error han
 | Category      | Technology                                    |
 |---------------|-----------------------------------------------|
 | Frontend      | Streamlit                                     |
-| Backend       | FastAPI + Uvicorn                             |
-| AI Engine     | Google Gemini (3-flash-preview)               |
-| Hosting       | Streamlit Cloud (frontend) + Render (Backend)  |
+| Backend       | Python, FastAPI + Uvicorn                     |
+| AI & Data     | Google Gemini (3-flash-preview), Pydantic     |
+| Payments      | Stripe API (with Webhook)                     |
+| Hosting       | Streamlit Cloud (frontend) + Render (Backend) |
 | Environment   | UV (Python Package Manager)                   |
 |---------------------------------------------------------------|
 
@@ -42,7 +43,7 @@ The entire flow is shown asynchronous, responsive, and includes proper error han
 text-processing/
 |-- interface.py        # Streamlit frontend
 |-- resume_reviewer.py  # FastAPI Backend
-|-- config.py           # Shared configuration (Pydantic)
+|-- settings.py         # Shared configuration (Pydantic)
 |-- pyproject.toml
 |-- uv.lock
 |-- .env                # Environment Variable
@@ -71,6 +72,9 @@ Create a .env file in the root directory and add credentials:
 ```
 GEMINI_API_KEY=your_gemini_api_key_here
 API_URL=http://127.0.0.1:8000/review
+STRIPE_API_KEY=sk_test...
+STRIPE_WH_SECRET=whsec...
+
 ```
 
 ### Running Locally
@@ -94,8 +98,8 @@ uv run -- streamlit run interface.py
 - Add the API_URL in **Secrets** pointing to your live Render URL
 
 ### Security Features
-- 10MB file size limit
-- Safe file type validation
-- CORS configured for authorised domains
+- File Validation: Enforces a 10MB file size limit and specific file extensions to prevent malicious uploads
+- CORS Middleware: Configured to only allow requests from authorized Streamlit and Render domains
+- Stripe Webhook: Uses cryptographic signature verification to ensure payment events are genuine
 - Environment-based configuration
-Input sanitisation and detailed error handling
+- Input sanitisation and detailed error handling

@@ -22,11 +22,15 @@ footer = """
     padding: 50px 10px 20px 10px;
     font-size: 14px;
 }
+
+.footer p {
+    margin: 0;
+}
 </style>
 
 <div class="footer">
-    <p>&copy;Panzek Solutions 2026 | <a href="https://panzeksolutions.com/" target="_blank">Website</a></p></p>
-    
+    <p>&copy;Xclusive Mag 2026 | registered number ...</p> 
+    <p>Résumé Reviewer is Powered by Panzek Solutions | <a href="https://panzeksolutions.com/" target="_blank">Website</a></p></p> 
 </div>
 """
 
