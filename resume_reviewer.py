@@ -21,10 +21,11 @@ app = FastAPI()
 # CORS (Cross-Origin Resource Sharing)
 origins = [
     "https://panzek.onrender.com", 
-    "https://resumepluscover.streamlit.app"
+    "https://resumepluscover.streamlit.app",
     "http://localhost", 
+    "http://localhost:8501",
+    "http://127.0.0.1:8501",
     "http://localhost:8000", 
-    "http://127.0.0.1:8000/review",
 ]
 
 app.add_middleware(
@@ -83,7 +84,7 @@ async def stripe_webhook(request: Request):
             detail=f"Webhook Error: {str(e)}"
         )
     
-    if event['type'] == 'chechout.session.completed':
+    if event['type'] == 'checkout.session.completed':
         session = event.data.object
         # record payment in the database
         payment_db[session['id']] = "paid"
@@ -182,7 +183,7 @@ async def review(session_id: str, file: UploadFile = File(...)):
     try:
         # Request - Send the clean text to Gemini API
         response = client.models.generate_content(
-            model="gemini-3-flash-preview",
+            model="gemini-3-flash-preview", # change to gemini-2.5-flash for final production
             contents=contents
         )
     

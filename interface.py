@@ -1,18 +1,9 @@
 import streamlit as st
 import requests
-import streamlit.components.v1 as components
-# import os
 
-API_URL = "https://panzek.onrender.com/review"
-
-
-BACKEND_URL = "https://panzek.onrender.com"
-# BACKEND_URL = BACKEND_URL= "http://127.0.0.1:8000"
 # Set to run backend dynamically
-# if os.environ.get("IS_PRODUCTION") == "true":
-#     BACKEND_URL = "https://panzek.onrender.com"
-# else:
-#     BACKEND_URL = BACKEND_URL= "http://127.0.0.1:8000"
+BACKEND_URL = "https://panzek.onrender.com"
+API_URL = f"{BACKEND_URL}/review"
 
 # Define your footer HTML and CSS
 footer = """
@@ -47,6 +38,10 @@ st.set_page_config(
 # initialise application memory
 if "payment_status" not in st.session_state:
     st.session_state.payment_status = "idle"
+    
+if "checkout_url" not in st.session_state:
+    st.session_state.checkout_url = None
+    
 if "session_id" not in st.session_state:
     st.session_state.session_id = None
 
@@ -54,14 +49,18 @@ if "session_id" not in st.session_state:
 query_params = st.query_params
 if "payment" in query_params and "session_id" in query_params:
     sid = query_params["session_id"] 
+    
+    # Only verify once
     if st.session_state.payment_status != "paid":
         # verify payment status with the FastAPI backend
         with st.spinner("Verifying payment...", show_time=True):
             try:
-                res = requests.get(f"{BACKEND_URL}/verify-payment/{sid}")
+                res = requests.get(
+                    f"{BACKEND_URL}/verify-payment/{sid}"
+                )
                 if res.status_code == 200 and res.json().get("status") == "paid":
                     st.session_state.payment_status = "paid"
-                    st.session_state.session_id = "idle"
+                    st.session_state.session_id = sid
                     st.rerun()
             except Exception as e:
                 st.error(f"Connection error: {e}")
@@ -71,37 +70,43 @@ if st.session_state.payment_status == "idle":
     st.title("💼 Résumé Reviewer")
     st.write("Professional AI-powered review and cover letter generation for €5.00.")
     
-    # Dynamic placeholder block
-    button_placeholder = st.empty()
+    # Show pay button only if checkout_url doesn't exist
+    if st.session_state.checkout_url is None:
     
-    if button_placeholder.button("Pay and Get Started", key="pay_init_btn"):
-        try:
-            response = requests.get(f"{BACKEND_URL}/create-checkout-session")
-            if response.status_code != 200:
-                st.error(f"Backend error: {response.text}")
-            else:
+        if st.button(
+            "Pay and Get Started", 
+            key="pay_init_btn"
+        ):
+            try:
+                response = requests.get(
+                    f"{BACKEND_URL}/create-checkout-session"
+                )
+                st.write("Resonse status:", response.status_code)
                 data = response.json()
+                st.write("Returned data:", data)
+                
                 checkout_url = data.get("url")
-                st.session_state.session_id = data.get("id")
                 
                 if checkout_url:
-                    
-                    button_placeholder.markdown(                     
-                        f'''
-                        <meta http-equiv="refresh" content="0; url={checkout_url}">
-                        ''', 
-                        unsafe_allow_html=True
-                    )
+                    st.session_state.checkout_url = checkout_url
+                    st.session_state.session_id = data.get("id")  
+                    st.rerun()
                 else:
                     st.error("Stripe checkout URL missing.")
                     
-        except Exception as e:  
-            button_placeholder.button(
-                "Pay and Get Started", 
-                key="pay_retry_btn"
-            )
-            st.error(f"Could not reach the payment server: {e}")
-
+            except Exception as e:
+                st.error(f"Could not reach payment server: {e}")
+                
+    else:
+                
+        st.success("Secure payment session ready.")
+        
+        st.link_button(
+            "Click to Go to Secure Payment",
+            st.session_state.checkout_url,
+            use_container_width=True,
+        )
+                    
 # The paid layout block          
 elif st.session_state.payment_status == "paid":     
     st.title("Upload Your Résumé")  
@@ -114,14 +119,25 @@ elif st.session_state.payment_status == "paid":
     
     if uploaded_file and st.button("Review Your Résumé"):
         # Spinner wrapped code that performs network request
-        with st.spinner("AI is reviewing Résumé... Please wait.", show_time=True):
+        with st.spinner("Reviewing Your Résumé... Please wait.", show_time=True):
             
             # Prepare the file to be sent via HTTP
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             
+            data = {
+                "session_id": st.session_state.session_id
+            }
+            
             try:
                 # Send the POST requests to FastAPI
-                response = requests.post(API_URL, files=files, timeout=120)
+                response = requests.post(
+                    API_URL,
+                    params={"session_id": st.session_state.session_id},  
+                    files=files,
+                    data=data, 
+                    timeout=120
+                )
+
                 if response.status_code == 200:
                     result = response.json()
                     st.balloons()
