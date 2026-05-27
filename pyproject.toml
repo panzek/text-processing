@@ -8,6 +8,7 @@ dependencies = [
     "fastapi[standard]>=0.136.1",
     "google-genai>=1.73.1",
     "pydantic>=2.13.3",
+    "pydantic-ai-slim[google]>=1.103.0",
     "pydantic-settings>=2.14.0",
     "pypdf[full]>=6.10.2",
     "python-docx>=1.2.0",

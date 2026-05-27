@@ -4,6 +4,8 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
+from pydantic_ai import Agent
+from pydantic import BaseModel, Field
 from docx import Document
 
 import stripe
@@ -40,6 +42,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ResumeFeedback(BaseModel):
+    rewritten_resume: str = Field(
+        ...,
+        description ="The entire resume commpletely rewritten, high-impact and professional. "
+        "Keep it clean and structured in Markdown format."
+    )
+    cover_letter: str = Field(
+        ...,
+        description="A tailored, compelling professional cover "
+        "letter matching the candidate's background."
+    )
+    
+
 # define payment endpoint
 @app.get("/create-checkout-session")
 async def create_checkout_session():
@@ -51,7 +66,7 @@ async def create_checkout_session():
                 'currency': 'eur',
                 'product_data': {
                     'name': 'Professional Résumé Reviewer',
-                    'description': 'A rewritten resume with compelling, professional  cover letter tailored to it' 
+                    'description': 'A rewritten resume with compelling, professional cover letter tailored to it' 
                 },
                 'unit_amount': 500  
             },
