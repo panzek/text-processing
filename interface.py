@@ -1,8 +1,9 @@
+import os
 import streamlit as st
 import requests
 
 # Set to run backend dynamically
-BACKEND_URL = "https://panzek.onrender.com"
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 API_URL = f"{BACKEND_URL}/review"
 
 # Define your footer HTML and CSS

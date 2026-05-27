@@ -1,4 +1,5 @@
 import io
+import os
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
@@ -11,6 +12,9 @@ from config import settings
 # Initialize the Gemini Client
 client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
 stripe.api_key = settings.STRIPE_SECRET_KEY.get_secret_value()
+
+# Detect if production frontend URL exists; otherwise default to local testing
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8501")
 
 # Mock database to temporary store session id and payment status 
 payment_db = {}
@@ -54,8 +58,9 @@ async def create_checkout_session():
             'quantity': 1
         }],
         mode='payment',
-        success_url="http://localhost:8501/?payment=success&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url="http://localhost:8501/?payment=cancel"
+        # Dynamic Routing handles environment automatically
+        success_url=f"{FRONTEND_URL}/?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{FRONTEND_URL}/?payment=cancel"
         )
         
         return {"url": session.url, "id": session.id}
