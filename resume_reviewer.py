@@ -2,8 +2,7 @@ import io
 import os
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from google import genai
-from google.genai import types
+from pydantic_ai import BinaryContent
 from pydantic_ai import Agent
 from pydantic import BaseModel, Field
 from docx import Document
@@ -12,7 +11,8 @@ import stripe
 from config import settings
 
 # Initialize the Gemini Client
-client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
+# client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
+os.environ["GOOGLE_API_KEY"] = settings.GEMINI_API_KEY.get_secret_value()
 stripe.api_key = settings.STRIPE_SECRET_KEY.get_secret_value()
 
 # Detect if production frontend URL exists; otherwise default to local testing
@@ -24,7 +24,7 @@ payment_db = {}
 # Instantiate FastAPI
 app = FastAPI()
 
-# CORS (Cross-Origin Resource Sharing)
+# CORS allows frontend to call backend
 origins = [
     "https://panzek.onrender.com", 
     "https://resumepluscover.streamlit.app",
@@ -42,19 +42,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Pydantic model schema
 class ResumeFeedback(BaseModel):
     rewritten_resume: str = Field(
         ...,
-        description ="The entire resume commpletely rewritten, high-impact and professional. "
-        "Keep it clean and structured in Markdown format."
+        description =(
+            "You are an expert career coach. "
+            "Review this resume carefully and rewrite it with improvements. "
+            "Then draft a compelling, professional  cover letter tailored to it. "
+            "Include a Career Coach Tips:\n\n"
+            "Resume content:\n"
+        )
     )
-    cover_letter: str = Field(
+    suggested_cover_letter: str = Field(
         ...,
         description="A tailored, compelling professional cover "
         "letter matching the candidate's background."
     )
-    
 
+system_prompt = (
+        "You are an elite executive recruiter and career coach. "
+        "Review this resume carefully and rewrite it with improvements. "
+        "Then draft a compelling, professional  cover letter tailored to it.\n\n"
+        "Resume content:\n"
+    ),
+
+model="google:gemini-1.5-flash"
+
+resume_agent = Agent(
+    model="gemini-3-flash-preview", # change to gemini-2.5-flash for final production
+    output_type=ResumeFeedback,
+    system_prompt=system_prompt,
+    retries=3
+)
+      
 # define payment endpoint
 @app.get("/create-checkout-session")
 async def create_checkout_session():
@@ -133,13 +154,17 @@ async def verify_payment(session_id: str):
 # Define a path operation
 @app.post("/review")
 # path operation function
-async def review(session_id: str, file: UploadFile = File(...)):
+async def review(
+    session_id: str, 
+    file: UploadFile = File(...)
+):
     # verify payment
     if payment_db.get(session_id) != "paid":
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED, 
             detail="Payment not verifed. Please complete checkout first"
             )
+
     # Read the raw file bytes
     content = await file.read()
     
@@ -151,19 +176,15 @@ async def review(session_id: str, file: UploadFile = File(...)):
             detail="File too large. Maximum allowed size is 10MB."
         )
     
-    prompt = (
-        "You are an expert career coach. "
-        "Review this resume carefully and rewrite it with improvements. "
-        "Then draft a compelling, professional  cover letter tailored to it.\n\n"
-        "Resume content:\n"
-    )  
+    message_parts = []
     
     # DOCX handling
     if file.filename.lower().endswith('.docx'):
         try:
             doc = Document(io.BytesIO(content))
             text_content = "\n".join([para.text for para in doc.paragraphs])
-            contents = [f"{prompt}\n\n{text_content}"]
+            message_parts.append(f"Please analyse this candidate's resume text:\n\n{text_content}")
+            # contents = [f"{system_prompt}\n\n{text_content}"]
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -173,15 +194,14 @@ async def review(session_id: str, file: UploadFile = File(...)):
     # Handle PDFs using Gemini's native vision
     elif file.filename.lower().endswith(".pdf"):
         try:
-            contents = [
-                types.Content(
-                    role="user",
-                    parts=[
-                        types.Part.from_text(text=prompt),
-                        types.Part.from_bytes(data=content, mime_type="application/pdf")
-                    ]
+            message_parts.append("Please analyse the attached PDF document data carefully.") 
+                # ... and attach the raw PDF bytes using PydanticAI's wrapper
+            message_parts.append(
+                BinaryContent(
+                    data=content,
+                    media_type="application/pdf"
                 )
-            ]     
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -192,7 +212,7 @@ async def review(session_id: str, file: UploadFile = File(...)):
     else:
         try:  
             text_content = content.decode("utf-8", errors="replace")
-            contents = [f"{prompt}\n\n{text_content}"]
+            message_parts.append(f"Please analyse this candidate's resume text:\n\n{text_content}")
 
         except Exception as e:
             raise HTTPException(
@@ -201,13 +221,8 @@ async def review(session_id: str, file: UploadFile = File(...)):
             )
     
     try:
-        # Request - Send the clean text to Gemini API
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview", # change to gemini-2.5-flash for final production
-            contents=contents
-        )
-    
-        return {"review": response.text.strip()}
+        result = await resume_agent.run(message_parts)
+        return result.output.model_dump()
     
     except Exception as e:
         raise HTTPException(

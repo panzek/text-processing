@@ -140,14 +140,25 @@ elif st.session_state.payment_status == "paid":
                 )
 
                 if response.status_code == 200:
-                    result = response.json()
-                    st.balloons()
-                    st.success("Review Complete!")
-                    st.markdown("### Optimised Review & Cover Letter")
-                    st.markdown(result.get("review", "No summary returned"))
+                    result = response.json()  
+                    rewritten_resume = result.get("rewritten_resume")
+                    suggested_cover_letter = result.get("suggested_cover_letter")
+                    if rewritten_resume and suggested_cover_letter:
+                        
+                        st.balloons()
+                        st.success("Review Complete!")
+                        st.subheader("Your Professional Rewritten Résumé")
+                        st.markdown(rewritten_resume)
+                        
+                        st.markdown("---")
+                        
+                        st.subheader("Your Tailored Cover Letter")
+                        st.markdown(suggested_cover_letter)
+                    else:   
+                        st.warning("The analysis completed, but some fields were missing from the payload.")
             
                 else:
-                    st.error(f"Server Error: {response.status_code}")
+                    st.error(f"Error processing your request: {response.text}")
         
             except requests.exceptions.ConnectionError:
                 st.error("Could not connect to FastAPI.")
