@@ -147,13 +147,18 @@ elif st.session_state.payment_status == "paid":
                         
                         st.balloons()
                         st.success("Review Complete!")
-                        st.subheader("Your Professional Rewritten Résumé")
-                        st.markdown(rewritten_resume)
                         
-                        st.markdown("---")
+                        # Add tabs elements
+                        tab1, tab2 = st.tabs(["Rewritten Resume", "Cover Letter"])
+
+                        with tab1:
+                            st.subheader("Your Professional Rewritten Résumé")
+                            st.write(rewritten_resume)
+                            
+                        with tab2:
+                            st.subheader("Your Tailored Cover Letter")
+                            st.write(suggested_cover_letter)
                         
-                        st.subheader("Your Tailored Cover Letter")
-                        st.markdown(suggested_cover_letter)
                     else:   
                         st.warning("The analysis completed, but some fields were missing from the payload.")
             
