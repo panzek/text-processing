@@ -2,7 +2,55 @@
 
 ## Introduction
 
-**Résumé Reviewer & Cover Letter Generator** is a full-stack AI application that reviews résumé and generates tailored cover letters using Google Gemini. Built with **FastAPI** (backend) and **Streamlit** (frontend). 
+An automated full-stack application built using **FastAPI** (backend), **Streamlit** frontend, and **PydanticAI** (utilising Google's Gemini 3 Flash Preview). The system securely processes payments via **Stripe**, extracts data from multi-format resumes, and generates structural, type-safe rewritten résumés, tailored cover letters, and career coach tips.
+
+### System Architecture
+The application handles data extraction, asynchronous validation, and secure payment processing across three major layers:
+- **Frontend (Streamlit):** Cordinates multi-part file uploads and forces parent window top-level redirections to bypass Stripe iframe sandbox restrictions.
+- **Backend (FastAPI):** Controls webhooks, manages mock database persistence, parses document content structures, and servers as the API gateway.
+- **AI Layer (PydanticAI):** Enforces rigid structureal type-safety constraints directly over Gemini's multimodal output layer, eliminating unstructured raw string parsing failures.
+
+### Core Modules Breakdown
+**Type-Safe AI Schema Validation**
+The system relies on PydanticAI's structured output_type pipeline configuration. This guarantees that your frontend always receives consistent JSON dictionary fields without risk of random formatting drift:
+
+```
+class ResumeFeedback(BaseModel):
+    rewritten_resume: str = Field(
+        ...,
+        description =(
+            "You are an expert career coach. "
+            "Review this resume carefully and rewrite it with improvements. "
+            "Then draft a compelling, professional  cover letter tailored to it.\n\n"
+            "Resume content:\n"
+        )
+    )
+    suggested_cover_letter: str = Field(
+        ...,
+        description="A tailored, compelling professional cover "
+        "letter matching the candidate's background."
+    )
+    
+    career_coach_tips: str = Field(
+        ...,
+        description="Give career coach tips "
+        "based on the reviewed resume."
+        "Career Coach Tips:\n\n"
+    )
+
+```
+
+### Advanced Multi-Modal Document Parsing
+- **.docx and .txt files:** Extracted as pure text strings instantly inside the endpoint and cleanly wrapped into the analysis runtime text payload.
+- **.pdf files:** Leverages Gemini's native vision capability. The raw file bytes stream directly to the model wrapped inside a PydanticAI:
+
+```
+    BinaryContent(
+        data=content,
+        media_type="application/pdf"
+    )
+```
+node, maintaining all underlying layout structural formatting.
 
 ### Features
 - **Multi-format Support**: Accepts '.pdf', '.docx', and '.txt' résumé files.
@@ -27,15 +75,15 @@
 The entire flow is shown asynchronous, responsive, and includes proper error handling and logging.
 
 ### Tech Stack
-| Category      | Technology                                    |
-|---------------|-----------------------------------------------|
-| Frontend      | Streamlit                                     |
-| Backend       | Python, FastAPI + Uvicorn                     |
-| AI & Data     | Google Gemini (3-flash-preview), Pydantic     |
-| Payments      | Stripe API (with Webhook)                     |
-| Hosting       | Streamlit Cloud (frontend) + Render (Backend) |
-| Environment   | UV (Python Package Manager)                   |
-|---------------------------------------------------------------|
+| Category      | Technology                                                |
+|---------------|-----------------------------------------------------------|
+| Frontend      | Streamlit                                                 |
+| Backend       | Python, FastAPI + Uvicorn                                 |
+| AI & Data     | Google Gemini (3-flash-preview), PydanticAI, Pydantic     |
+| Payments      | Stripe API (with Webhook Cryptographic Verification)      |
+| Hosting       | Streamlit Cloud (frontend) + Render (Backend)             |
+| Environment   | UV (Astral Python Package Manager)                        |
+|---------------------------------------------------------------------------|
 
 
 ### Project Structure
@@ -43,7 +91,7 @@ The entire flow is shown asynchronous, responsive, and includes proper error han
 text-processing/
 |-- interface.py        # Streamlit frontend
 |-- resume_reviewer.py  # FastAPI Backend
-|-- settings.py         # Shared configuration (Pydantic)
+|-- config.py         # Shared configuration (Pydantic)
 |-- pyproject.toml
 |-- uv.lock
 |-- .env                # Environment Variable
@@ -52,7 +100,7 @@ text-processing/
 
 ### Local Setup & Installation
 
-1. Prerequsites
+### Prerequsites
     - Python 3.10+
     - uv package manager
 ```
@@ -60,46 +108,56 @@ text-processing/
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-2. Clone & Setup
+### Clone & Setup
 ```
 git clone https://github.com/panzek/text-processing
 cd resume-reviewer
 uv sync
 ```
 
-3. Environment Variables
-Create a .env file in the root directory and add credentials:
+### Configure Environment Variables
+Create a .env file in the root directory and add credentials, (or add these key-value configurations inside your Render web service dashboard):
 ```
+# AI Modal Configuration
 GEMINI_API_KEY=your_gemini_api_key_here
-API_URL=http://127.0.0.1:8000/review
+
+# Stripe Secrets
 STRIPE_API_KEY=sk_test...
 STRIPE_WH_SECRET=whsec...
 
+# Dynamic URL Configurations
+FRONTEND_URL=http://localhost:8501
+
+```
+Note: PydanticAI reads the standard GOOGLE_API_KEY slot. Your backend automatically bridges this gap on runtime boot using:
+
+```
+os.environ["GOOGLE_API_KEY"] = settings.GEMINI_API_KEY.get_secret_value()
 ```
 
 ### Running Locally
-#### Terminal 1 - Backend
+To run the complete microservice mesh locally, launch both server terminals simultaneously:
+
+#### Terminal 1 - Spin up the FastAPI Backend
 ```
 uv run uvicorn resume_reviewer:app --reload 
 ```
-### Terminal 2 - Frontend
+### Terminal 2 - Spin up the Streamlit Frontend Client
 ```
-uv run -- streamlit run interface.py
+uv run streamlit run interface.py
 ```
 
-### Deployment
+### Production Deployment
 #### Backend (Render)
 - Build Command: uv sync --frozen && uv cache prune --ci
 - Start Command: uvicorn resume_reviewer:app --host 0.0.0.0 --port $PORT
 
 #### Frontend (Streamlit Cloud)
-- Connect your GitHub repository
+- Connect your GitHub repository to Streamlit Cloud
 - Set the Main file path to interface.py
-- Add the API_URL in **Secrets** pointing to your live Render URL
+- Add your production environment variable secrets inside the dashboard (BACKEND_URL pointing directly to your live Render URL).
 
-### Security Features
-- File Validation: Enforces a 10MB file size limit and specific file extensions to prevent malicious uploads
-- CORS Middleware: Configured to only allow requests from authorized Streamlit and Render domains
-- Stripe Webhook: Uses cryptographic signature verification to ensure payment events are genuine
-- Environment-based configuration
-- Input sanitisation and detailed error handling
+### Security Architectures
+- File Validation: Restricts payload body requests to a maximum size of 10MB and checks extensions strictly to block malicious executions.
+- CORS Middleware: Explicitly white-lists communication to prevent cross-origin unauthorized scripting from foreign domains.
+- Stripe Webhook: Employs end-to-end cryptographic signature validation (stripe.Webhook.construct_event) to block fake payment injection attempts.
