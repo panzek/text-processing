@@ -49,8 +49,7 @@ class ResumeFeedback(BaseModel):
         description =(
             "You are an expert career coach. "
             "Review this resume carefully and rewrite it with improvements. "
-            "Then draft a compelling, professional  cover letter tailored to it. "
-            "Include a Career Coach Tips:\n\n"
+            "Then draft a compelling, professional  cover letter tailored to it.\n\n"
             "Resume content:\n"
         )
     )
@@ -59,11 +58,18 @@ class ResumeFeedback(BaseModel):
         description="A tailored, compelling professional cover "
         "letter matching the candidate's background."
     )
+    
+    career_coach_tips: str = Field(
+        ...,
+        description="In a career coach tips based "
+        "based on the reviewed resume."
+        "Career Coach Tips:\n\n"
+    )
 
 system_prompt = (
         "You are an elite executive recruiter and career coach. "
         "Review this resume carefully and rewrite it with improvements. "
-        "Then draft a compelling, professional  cover letter tailored to it.\n\n"
+        "Then draft a compelling, professional cover letter tailored to it.\n\n"
         "Resume content:\n"
     ),
 

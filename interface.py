@@ -143,13 +143,14 @@ elif st.session_state.payment_status == "paid":
                     result = response.json()  
                     rewritten_resume = result.get("rewritten_resume")
                     suggested_cover_letter = result.get("suggested_cover_letter")
-                    if rewritten_resume and suggested_cover_letter:
+                    career_coach_tips = result.get("career_coach_tips")
+                    if rewritten_resume and suggested_cover_letter and career_coach_tips:
                         
                         st.balloons()
                         st.success("Review Complete!")
                         
                         # Add tabs elements
-                        tab1, tab2 = st.tabs(["Rewritten Resume", "Cover Letter"])
+                        tab1, tab2, tab3 = st.tabs(["Rewritten Resume", "Cover Letter", "Career Coach Tips"])
 
                         with tab1:
                             st.subheader("Your Professional Rewritten Résumé")
@@ -158,6 +159,10 @@ elif st.session_state.payment_status == "paid":
                         with tab2:
                             st.subheader("Your Tailored Cover Letter")
                             st.write(suggested_cover_letter)
+                            
+                        with tab3:
+                            st.subheader("Career Coach Tips")
+                            st.write(career_coach_tips)
                         
                     else:   
                         st.warning("The analysis completed, but some fields were missing from the payload.")
