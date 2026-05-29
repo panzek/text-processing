@@ -19,10 +19,8 @@ class ResumeFeedback(BaseModel):
     rewritten_resume: str = Field(
         ...,
         description =(
-            "You are an expert career coach. "
-            "Review this resume carefully and rewrite it with improvements. "
-            "Then draft a compelling, professional  cover letter tailored to it.\n\n"
-            "Resume content:\n"
+            "Review this resume carefully and rewrite it with modern enhancements. "
+            "Structured cleanly in Markdown format."
         )
     )
     suggested_cover_letter: str = Field(
@@ -33,8 +31,8 @@ class ResumeFeedback(BaseModel):
     
     career_coach_tips: str = Field(
         ...,
-        description="Give career coach tips "
-        "based on the reviewed resume."
+        description="Actionable career coach tips and strategy "
+        "recommendations based on the reviewed resume."
         "Career Coach Tips:\n\n"
     )
 
@@ -54,23 +52,18 @@ node, maintaining all underlying layout structural formatting.
 
 ### Features
 - **Multi-format Support**: Accepts '.pdf', '.docx', and '.txt' résumé files.
-- **Intelligent Résumé Review**: Detailed analysis and professional rewrite suggestions
-- **Tailored Cover Letter**: Automatically generated a matching, compelling cover letter
-- **Fast & Resoponsive UI**: Built with Streamlit for excellent user experience
-- **Secure & Production Ready**: File validation, CORS protection, and error handling
+- **Intelligent Résumé Review**: Detailed analysis and executive-level professional rewrite structural suggestions.
+- **Tailored Cover Letter**: Automatically generated a matching, highly compelling cover letter.
+- **Fast & Resoponsive UI**: Built with Streamlit for a seamless, instantaneous user experience.
+- **Secure & Production Ready**: Enforces explicit file size limits, robust CORS protection, and cryptographic signature validations.
 
 ### How it Works
-1. **Upload** - Users upload their résumés (PDF, DOCX, or TXT) through the Streamlit interface
-2. **Processing** - The frontend sends the file to the FastAPI backend.
-3. **Text Extraction** - Backend extracts text from the file:
-    - Uses 'python-docx' for '.docx'
-    - Uses Gemini's native PDF support for '.pdf'
-    - Direct coding for '.txt' files 
-4. **AI Analysis** - The extracted text is sent to **Google Gemini** with a well-crafted prompt.
-5. **Response Generation** - Gemini returns:
-    - An improved, professionally rewritten résumé.
-    - A compelling, tailored cover letter
-6. **Display** - Results are shown beautifully in the Streamlit frontend.
+1. **Upload:** Users upload their résumés (PDF, DOCX, or TXT) through the Streamlit interface
+2. **Payment:** The fuser pays a flat €5.00 checkout fee using a secure top-level window redirect powered by Stripe.
+3. **Processing:** Streamlit sends the file and verified session_id securely to the FastAPI backend.
+4. **Text Extraction:** FastAPI extracts contents adaptively based on file types using 'python-docx' or native binary streaming. 
+5. **AI Analysis & Response:** PydanticAI passes the text/bytes to Google Gemini, validates the schema output fields, and returns a perfectly structured JSON payload containing the rewritten resume, letter, and tips.
+6. **Display** - Results render instantly in clean Markdown tabs on the frontend.
 
 The entire flow is shown asynchronous, responsive, and includes proper error handling and logging.
 
@@ -89,9 +82,9 @@ The entire flow is shown asynchronous, responsive, and includes proper error han
 ### Project Structure
 ```
 text-processing/
-|-- interface.py        # Streamlit frontend
-|-- resume_reviewer.py  # FastAPI Backend
-|-- config.py         # Shared configuration (Pydantic)
+|-- interface.py        # Streamlit frontend application layer
+|-- resume_reviewer.py  # FastAPI Backend logic and endpoints
+|-- config.py         # Shared settings environment definition (Pydantic)
 |-- pyproject.toml
 |-- uv.lock
 |-- .env                # Environment Variable

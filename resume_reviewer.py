@@ -47,10 +47,8 @@ class ResumeFeedback(BaseModel):
     rewritten_resume: str = Field(
         ...,
         description =(
-            "You are an expert career coach. "
-            "Review this resume carefully and rewrite it with improvements. "
-            "Then draft a compelling, professional  cover letter tailored to it.\n\n"
-            "Resume content:\n"
+            "Review this resume carefully and rewrite it with modern enhancements. "
+            "Structured cleanly in Markdown format."
         )
     )
     suggested_cover_letter: str = Field(
@@ -61,8 +59,8 @@ class ResumeFeedback(BaseModel):
     
     career_coach_tips: str = Field(
         ...,
-        description="In a career coach tips based "
-        "based on the reviewed resume."
+        description="Actionable career coach tips and strategy "
+        "recommendations based on the reviewed resume."
         "Career Coach Tips:\n\n"
     )
 

@@ -29,6 +29,25 @@ footer = """
 </div>
 """
 
+# Inject custom CSS
+st.markdown("""
+    <style>
+        /* Reduce vertical padding between elements */
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        /* Tighten spacing between text elements */
+        .stMarkdown p {
+            margin-bottom: 0.25rem;
+        }
+        /* Reduce gap after titles and headers */
+        h1, h2, h3, h4, h5, h6 {
+            margin-bottom: 0.4rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Configure streamlit page
 st.set_page_config(
     page_title="AI Document Reviewer", 
@@ -84,7 +103,7 @@ if st.session_state.payment_status == "idle":
                 )
                 st.write("Resonse status:", response.status_code)
                 data = response.json()
-                st.write("Returned data:", data)
+                # st.write("Returned data:", data)
                 
                 checkout_url = data.get("url")
                 
@@ -101,6 +120,11 @@ if st.session_state.payment_status == "idle":
     else:
                 
         st.success("Secure payment session ready.")
+        
+        st.markdown("**Use the Stripe test card information below for payment**")
+        st.markdown("a. Card No: 4000003720000005")
+        st.write("b. Use a valid future date, such as 12/34.")
+        st.write("c. Use any three-digit CVC.")
         
         st.link_button(
             "Click to Go to Secure Payment",
@@ -150,7 +174,7 @@ elif st.session_state.payment_status == "paid":
                         st.success("Review Complete!")
                         
                         # Add tabs elements
-                        tab1, tab2, tab3 = st.tabs(["Rewritten Resume", "Cover Letter", "Career Coach Tips"])
+                        tab1, tab2, tab3 = st.tabs(["**Rewritten Resume**", "**Cover Letter**", "**Career Coach Tips**"])
 
                         with tab1:
                             st.subheader("Your Professional Rewritten Résumé")
