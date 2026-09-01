@@ -121,11 +121,6 @@ if st.session_state.payment_status == "idle":
                 
         st.success("Secure payment session ready.")
         
-        st.markdown("**Use the Stripe test card information below for payment**")
-        st.markdown("a. Card No: 4000003720000005")
-        st.write("b. Use a valid future date, such as 12/34.")
-        st.write("c. Use any three-digit CVC.")
-        
         st.link_button(
             "Click to Go to Secure Payment",
             st.session_state.checkout_url,
